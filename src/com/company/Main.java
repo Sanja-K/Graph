@@ -1,299 +1,342 @@
 package com.company;
 
+
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Scanner;
 
 import static java.lang.Integer.min;
+import static java.lang.Integer.parseInt;
 import static java.lang.Math.max;
 
 //import static java.lang.Math.min;
 
 public class Main {
 
-    private static final Integer INF =  Integer.MAX_VALUE / 2;;
+    private static final Integer INF =  Integer.MAX_VALUE / 2;
+
+    public static int[][] matrix; // матрица смежности
 
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
-        Integer matrix[][]; // матрица смежности
         int n = 0;
-        double number = 0;
 
-        System.out.println("Введите количестdо вершин графа");
+        System.out.println("Введите количество вершин графа");
         n = sc.nextInt();
 
-        matrix = new Integer[n][n];
-        int r = 0;
-        int index = 0;
-        int vertex_degree [] = new int [n]; //массив со значениеми степеней вершин
-        int ribs = 0; // Количество рёбер графа
-
-        //TODO Переделать Сортировкку вершин по видам в матрице смежности ( без учёта петель)//
+        matrix = new int[n][n];
 
         /** Генерация случайной неориентированной матрицы смежности*/
+        createAdjacencyMatrix(n);
+
+        System.out.println(" Матрица смежности ");
+        for (int i = 0; i < matrix.length; i++) {
+            for (int j = 0; j < matrix[i].length; j++) {
+                System.out.print(matrix[i][j] + "\t");
+            }
+            System.out.println();
+        }
+
+        /** Вычисления радиуса и диаметра графа и определение Центральных и Периферийных вершин*/
+        eccentricityCalculat(matrix, n);
+        /** Определение степеней вершин графа по Матрице Смежности*/
+        degreeCalculationVertices(matrix, n);
+
+        /** Генерация матрицы Инциндентности */
+        createIncidentMatrix( matrix, n);
+    }
+
+    /** Генерация случайной неориентированной Матрицы Смежности*/
+    public static void createAdjacencyMatrix( int n){
+        int index = 0;
+        double number = 0;
+
         for(int i = 0; i<n; i++){
             for (int j  = index; j <n ; j++){
-                 number = Math.random(); // Рандомим случайное занчение в диапазоне 0.0 - 1.0
+                number = Math.random(); // Рандомим случайное значение в диапазоне 0.0 - 1.0
                 int resultNum = (int) Math.round (number); // округляем результат к ближайшему целому числу
-                matrix[i][j] = resultNum;
 
                 if(i!=j){
+                    matrix[i][j] = resultNum;
                     matrix[j][i] = resultNum;
+                }else{
+                    matrix[i][j] = resultNum; // у вершины может быть несколько петлей
                 }
-
-                /**Вычисление степеней верщин графа */
-                if(resultNum == 1){
-                    ribs ++;
-
-                    vertex_degree[i]++;
-                    if(i!=j){ // Если i и j равны, то значит у вершины i есть петля, а это считается как 2 вхождения в вершину
-                        vertex_degree[j]++;
-                    }else{
-                        vertex_degree[i] ++;
-                    }
-                }
-                 /** */
+                /** */
             }
             index++;
         }
-        /** */
-
-        System.out.println(" МАТРИЦА СМЕЖНОСТИ ");
-        /** Сортировка вершин по видам*/
-        for (int i = 0; i<vertex_degree.length; i++){
-
-            switch (vertex_degree[i]){
-                case 0: {
-                    System.out.println(" Вершина " + i +  " со степенью " + vertex_degree[i] + " является изолированной");
-                    break;
-                }
-                case 1: {
-                    System.out.println(" Вершина " + i +  " со степенью " + vertex_degree[i] + " является концевой");
-                    break;
-                }
-                default :{
-                    if( (vertex_degree[i] == (n-1) && matrix[i][i]== 0 ) || (vertex_degree[i] == n + 1 && matrix[i][i] == 1) ){
-                        System.out.println(" Вершина " + i +  " со степенью " + vertex_degree[i] + " является доминирующей");
-                        break;
-                    }else {
-                        System.out.println(" Доминирующие вершины отсутствуют");
-                    }
-                }
-            }
-        }
-        /** */
-
-
-
-        /** Генерация матрицы инциндентности на основе матрицы смежности */
-        //ArrayList<Integer> loop_vertex = new ArrayList<Integer>();
-        int loop_vertex[] = new int[n];
-        int vertex_degree_inc [] = new int[n];
-        int matrix_incen [][] = new int[n][ribs];
-            int ind = 0;
-            int index_1 = 0;
-          for (int i = 0; i< n; i++){
-              for (int j = index_1; j<n; j++ ){
-                  if (matrix[i][j] == 1){
-
-                        if(i==j){
-                            matrix_incen[i][ind] = 2;
-                            loop_vertex[i] = j;
-                        }else{
-                            matrix_incen[i][ind] = 1;
-                            matrix_incen [j][ind] = 1;
-                        }
-                      ind++;
-                  }
-              }
-                index_1++;
-          }
-
-        System.out.println(" inceen ");
-          for (int i = 0; i<n; i++){
-              for (int j = 0; j<ribs; j++){
-                  System.out.print(matrix_incen[i][j] + " ");
-              }
-              System.out.println();
-          }
-
-        int val;
-        for (int i = 0; i<n; i++){
-            for (int j = 0; j<ribs; j++){
-
-                if(matrix_incen[i][j] ==1){
-                    vertex_degree_inc [i]++;
-                }
-
-            }
-        }
-
-        /** Вывод результата*/
-
-        System.out.println(" МАТРИЦА ИНЦЕНДЕНТОВ ");
-        for (int i = 0; i <vertex_degree_inc.length; i++) {
-             switch (vertex_degree_inc[i]){
-
-                 case 0:{
-                     System.out.println(" Вершина " + i +  " со степенью "   + (vertex_degree_inc[i] + loop_vertex[i]) + " является изолированной");
-                     break;
-                 }
-                 case 1:{
-                     System.out.println(" Вершина " + i +  " со степенью "   + (vertex_degree_inc[i] + loop_vertex[i]) + " является концевой");
-                 }
-                 default:{
-
-                     if( (vertex_degree_inc[i] == (n-1)) ){
-                         System.out.println(" Вершина " + i +  " со степенью " + (vertex_degree_inc[i] + loop_vertex[i]) + " является доминирующей");
-                         break;
-                     }else {
-                         System.out.println(" Доминирующие вершины отсутствуют");
-                     }
-                 }
-             }
-
-        }
-
-        /** */
-
-
-        for (int i = 0; i < matrix.length; i++) {
-            for (int j = 0; j < matrix[i].length; j++) {
-                System.out.print(matrix[i][j] + "\t");
-            }
-            System.out.println();
-        }
-        System.out.println("sm");
-        for (int j = 0; j < vertex_degree.length; j++) {
-            System.out.print(vertex_degree[j] + "\t");
-        }
-
-        /** Обнудяем Значения диагональных ячеек т.к. они не учавствуют в вычислении матрицы расстояний*/
-        for (int i = 0; i<n; i++){
-            matrix[i][i] = 0;
-        }
-        /** */
-
-        System.out.println(" sttepen ");
-
-        /** Заменяем все не диагональные нули, значениями бесконечности */
-        for (int i = 0; i < matrix.length; i++) {
-            for (int j = 0; j < matrix[i].length; j++) {
-                if(i!=j && matrix[i][j]==0){
-                    matrix[i][j] = INF;
-                }
-            }
-        }
-
-
-        for (int i = 0; i < matrix.length; i++) {
-            for (int j = 0; j < matrix[i].length; j++) {
-                System.out.print(matrix[i][j] + "\t");
-            }
-            System.out.println();
-        }
-      //  System.out.println( );
-
-        algoritm(matrix, n);
-
     }
 
-    /** Ал*/
-    public  static void algoritm(Integer[][] matrix1, int n){
-
-        Integer [][] dist = new Integer [n][n];
-        int e[] =new int[n]; // Эксцентриситет вершин
+    /** Алгоритм ФЛойда-Уолшера, Вычисление эксцентриситета вершин */
+    public  static void eccentricityCalculat(int[][] matrix1, int n){
+        int[][] matrix_adjacency = new int[n][n];
 
         for (int i = 0; i < n; i++){
-            System.arraycopy(matrix1[i], 0, dist[i], 0, n);
+            System.arraycopy(matrix1[i], 0, matrix_adjacency[i], 0, n);
         }
 
+        for (int i = 0; i <matrix_adjacency.length; i++) {
+            for (int j = 0; j < matrix_adjacency[i].length; j++) {
+                if(i!=j && matrix_adjacency[i][j]==0){
+                    matrix_adjacency[i][j] = INF;
+                }
+            }
+        }
+
+        System.out.println( "Матрица копи " );
+
+        for (int i = 0; i < n; i++){
+            for (int j = 0; j < n; j++){
+                System.out.print( matrix_adjacency[i][j] + "\t");
+            }
+            System.out.println();
+        }
 
         for(int i = 0; i<n; i++){
-            matrix1[i][i] = 0;
+            if(matrix_adjacency[i][i]>0){
+                matrix_adjacency[i][i] = 0;// если петли найдены обнуляю значение
+            }
         }
-    /** Аолгоритм Флойда - Уоршела */
-    for (int k = 0; k < n; ++k){
-        for (int i= 0; i < n; ++i){
-            for (int j = 0; j < n; ++j){
-                if(i!=j){
-                   // if (matrix1[i][k] < INF && matrix1[k][j] < INF){
-                    if(matrix1[i][j]!= 0){
-                        matrix1[i][j] = min( matrix1[i][j], matrix1[i][k] + matrix1[k][j] );
-                    }else{
-                        matrix1[i][j] = matrix1[i][k] + matrix1[k][i];
+
+        /** Алгоритм Флойда - Уоршела */
+
+        for (int k = 0; k < n; ++k){
+            for (int i= 0; i < n; ++i){
+                for (int j = 0; j < n; ++j){
+                    if(i!=j){
+                        if(matrix_adjacency[i][j]!= 0){
+                            matrix_adjacency[i][j] = min( matrix_adjacency[i][j], matrix_adjacency[i][k] + matrix_adjacency[k][j] );
+                        }else{
+                            matrix_adjacency[i][j] = matrix_adjacency[i][k] + matrix_adjacency[k][i];
+                        }
                     }
                 }
             }
         }
-    }
-    /** */
-
-        System.out.println(" matr " );
 
         /** Вычисление эксцентриситета вершин */
-    int eccentricity[] = new int[n];
+        int[] eccentricity = new int[n];
         for (int i = 0; i < n; i++) {
-            eccentricity[i] = matrix1[i][0];
+            eccentricity[i] = -1;
 
             for (int j = 0; j < n; j++) {
-                if(eccentricity [i]<matrix1[i][j]){
-                    eccentricity [i] = matrix1[i][j];
+                if(matrix_adjacency[i][j]!=INF && eccentricity [i]<matrix_adjacency[i][j] ){
+                    eccentricity [i] = matrix_adjacency[i][j];
                 }
-                System.out.print( matrix1[i][j] + "\t" );
             }
-            System.out.println( );
         }
         /** */
 
-        for( int i = 0; i<eccentricity.length; i++){
+        outTypeVertex(eccentricity);
+    }
 
-            System.out.println(" eccen " +eccentricity[i]);
-        }
-            String central_tops = "" ;
-            String peripheral_tops = "";
+    /** Нахождение радиуса и диаметра графа, Вывод результатов*/
+    public static void outTypeVertex( int[] eccentricity){
+        String central_tops = "";
+        String peripheral_tops = "";
 
-            int min_r = eccentricity[0];
-            int max_d = eccentricity[0];
+        int min_r = INF;
+        int max_d = 0;
 
-
+        /** Нахождение радиуса и диаметра графа*/
         for( int i = 1; i<eccentricity.length; i++){
-            if(min_r > eccentricity[i]){
+            if(min_r > eccentricity[i] && eccentricity[i]>0){
                 min_r = eccentricity[i];
-            } else{ if( max_d < eccentricity[i]){
-                        max_d = eccentricity[i];
-                    }
             }
-           // System.out.println(" eccen " +eccentricity[i]);
+            if( max_d < eccentricity[i] ){
+                max_d = eccentricity[i];
+            }
         }
 
         if(min_r != max_d){
             for( int i = 0; i<eccentricity.length; i++){
                 if(eccentricity[i]==min_r) {
                     central_tops = central_tops + i + " ";
-                }else{ if(eccentricity[i] == max_d){
-                            peripheral_tops = peripheral_tops + i + " ";
-                        }
+                }
+                if(eccentricity[i] == max_d){
+                    peripheral_tops = peripheral_tops + i + " ";
                 }
             }
-
         }else{
-            central_tops = " Всё вершины графа являются центральными !";
+            for (int i= 0; i<eccentricity.length; i++ ){
+                central_tops = central_tops + i + ", ";
+            }
+        }
+
+        System.out.println("Радиус графа - "+ min_r);
+        System.out.println("Диаметр графа - " + max_d);
+
+        System.out.println("Центральные вершины " + central_tops);
+
+        if(!peripheral_tops.isEmpty()){
+            System.out.println("Переферийные вершины " +peripheral_tops);
+        }
+    }
+
+    /** Подсчёт Степеней вершин по Матрице Смежности */
+    public static void degreeCalculationVertices(int[][] matrix1, int n ){
+        String type_matrix = "Смежной";
+        int[] vertices_degree = new int[n]; // степени вершин без учёта петель
+        int[] loops_vertices = new int[n]; // только степени петель вершин
+
+        /**Вычисление степеней вершин графа */
+        int index = 0;
+        for (int i = 0; i<n; i++ ){
+            for (int j = index; j <n; j++){
+                if(matrix1[i][j]>0){
+
+                    if (i!=j){
+                        vertices_degree[i] = vertices_degree[i] + matrix1[i][j] ;
+                        vertices_degree[j] = vertices_degree[j] + matrix1[j][i] ;
+                    }else{
+                        loops_vertices[i] = matrix1[i][j] * 2; // степени петель для вершины
+                    }
+                }
+            }
+            index++;
+        }
+
+       /* for (int i =0; i<loops_vertices.length; i++){
+            System.out.print(" vertices_degree " +vertices_degree[i]);
+            System.out.print(" loops " +loops_vertices[i]);
+            System.out.println( );
+
+        }*/
+
+        outTypesVertex(vertices_degree, loops_vertices, type_matrix);
+    }
+
+
+    /** Генерация  Матрицы Инцендентов*/
+    public static void createIncidentMatrix(int [][] adjacency_matrix, int n){
+        int ribs = countRibs(adjacency_matrix, n);
+        int matrix_incen [][] = new int[n][ribs];
+
+        int ind = 0;
+        int index_1 = 0;
+
+        for (int i = 0; i< n; i++){
+            for (int j = index_1; j<n; j++ ){
+                if (adjacency_matrix[i][j] > 0){
+                    if(i==j){
+                        for ( int k = 0; k <adjacency_matrix[i][j]; k++){
+                            matrix_incen[i][ind] = 2;
+                            ind++;
+                        }
+                    }else{
+                        for ( int k = 0; k <adjacency_matrix[i][j]; k++){
+                            matrix_incen[i][ind] = 1;
+                            matrix_incen[j][ind] = 1;
+                            ind++;
+                        }
+                    }
+                }
+            }
+            index_1++;
+        }
+
+        degreeCalculationVertices(matrix_incen, n , ribs);
+
+    }
+
+
+    /** Подсчитываю количество рёбер у графа ( с учётом петель) */
+    public static int countRibs(   int[][] adjacency_matrix , int n){
+        int count_ribs = 0;
+        int index = 0;
+
+        for (int i = 0; i<n; i++) {
+            for (int j = index; j < n; j++) {
+                count_ribs = count_ribs + adjacency_matrix[i][j];
+            }
+            index++;
+        }
+        System.out.println("Количество рёбер - " + count_ribs);
+        return count_ribs;
+    }
+
+
+    /** Подсчёт Степеней вершин по Матрице Инциндентности */
+    public static void degreeCalculationVertices(int[][] matrix1, int n, int ribs ){
+        String type_matrix = "Инциндентной";
+
+        int[] vertices_degree = new int[n]; // степени вершин без учёта петель
+        int[] loops_vertices = new int[n]; // только степени петель вершин
+
+        for (int i = 0; i<n; i++){
+            for (int j = 0; j<ribs; j++){
+                switch (matrix1[i][j]){
+                    case 1:{
+                        vertices_degree[i] ++;
+                        break;
+                    }
+                    case 2:{
+                        loops_vertices[i] = 2;
+                        break;
+                    }
+                }
+            }
+        }
+
+        outTypesVertex(vertices_degree, loops_vertices, type_matrix);
+    }
+
+    /** Список степеней вершин графа */
+    public static void outTypesVertex(int[] vertices_degree, int[] loops_vertices, String type_matrix ){
+        String vertex_isolated = "";
+        String vertex_end = "";
+        String vertex_dominant = "";
+         HashMap<Integer,String> typeVertex = new HashMap<Integer, String>();
+        int vertex_count = vertices_degree.length;
+
+        for (int i = 0; i <vertices_degree.length; i++) {
+            switch (vertices_degree[i]){
+                case 0:{
+                    vertex_isolated = vertex_isolated  + i +  " со степенью "
+                            + (vertices_degree[i]  + loops_vertices[i]) + " " ;
+                    break;
+                }
+                case 1:{
+                    vertex_end = vertex_end  +  i +  " со степенью "
+                            + (vertices_degree[i]  + loops_vertices[i]) + " ";
+                }
+                default:{
+                    if( (vertices_degree[i] == vertex_count -1) ){
+                        vertex_dominant = vertex_dominant  + i +  " со степенью "
+                                + (vertices_degree[i]  + loops_vertices[i]) + " ";
+                    }
+                    break;
+                }
+            }
         }
 
 
+        boolean flag =true;
+        if (vertex_isolated.isEmpty() && vertex_end.isEmpty()
+                && vertex_dominant.isEmpty()){
+            flag = false;
+        }else {
+            typeVertex.put(0,vertex_isolated);
+            typeVertex.put(1,vertex_end);
+            typeVertex.put(6,vertex_dominant);
+        }
 
+        if (flag) {
+            System.out.println(" Типы у Вершин " + type_matrix +" матрицы " );
+            if (!typeVertex.get(0).isEmpty()){
+                System.out.println("Изолированные вершины " + typeVertex.get(0)); }
 
-        System.out.println("Радиус - "+ min_r);
-        System.out.println("Диаметр - " + max_d);
+            if (!typeVertex.get(1).isEmpty()){
+                System.out.println("Концевые вершины " + typeVertex.get(1)); }
 
-        System.out.println("central_tops " + central_tops);
-        System.out.println("peripheral_tops " +peripheral_tops);
-  /*      for (int i = 0; i < dist.length; i++) {
-            for (int j = 0; j < dist[i].length; j++) {
-                System.out.print(dist[i][j] + "\t");
-            }
-            System.out.println();
-        }*/
+            if (!typeVertex.get(6).isEmpty()){
+                System.out.println("Доминирующие вершины " + typeVertex.get(6)); }
+
+        }else{
+            System.out.println(" Типы у Вершин " + type_matrix +" матрицы  отсутствуют" );
+        }
 
     }
+
 }
